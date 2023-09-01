@@ -196,51 +196,40 @@
 <div class="simplify-options main-area popup-dialog">
 	<div class="info-box">
 		<div class="close2-btn"></div>
-		<h3>Simplification</h3>
+		<h3>単純化</h3>
 		<div class="option-menu">
-			<div><label for="import-retain-opt"><input type="checkbox" class="checkbox import-retain-opt"/>prevent shape removal</label>
+			<div><label for="import-retain-opt"><input type="checkbox" class="checkbox import-retain-opt"/>形の崩れを防ぐ</label>
 							<div class="tip-button">?<div class="tip-anchor">
-			<div class="tip">Prevent small polygon features from
-disappearing at high simplification. Keeps
-the largest ring of multi-ring features.
-</div></div></div></div>
-			<div class="planar-opt-wrapper"><label for="planar-opt"><input type="checkbox" class="checkbox planar-opt"/>use planar geometry</label>
+			<div class="tip">高度な単純化で、小さなポリゴン・フィーチャが消えるのを防ぎます。
+マルチ-リング・フィーチャの最大のリングを保持します。</div></div></div></div>
+			<div class="planar-opt-wrapper"><label for="planar-opt"><input type="checkbox" class="checkbox planar-opt"/>平面ジオメトリを使用する</label>
 							<div class="tip-button">?<div class="tip-anchor">
-			<div class="tip">Treat x, y values as Cartesian coordinates
-on a plane, rather than as longitude, latitude
-coordinates on a sphere.
-</div></div></div></div>
+			<div class="tip">x、yの値を、球上の経度・緯度の座標としてではなく、
+平面上のデカルト座標として扱います。</div></div></div></div>
 		</div>
 
-			<h4>Method</h4>
+			<h4>メソッド</h4>
 			<div class="option-menu">
 
 			<div><label><input type="radio" name="method" value="dp" class="radio">Douglas-Peucker</label><div class="tip-button">?<div class="tip-anchor">
-<div class="tip">Simplified lines remain within a set
-distance of original lines. Good for
-thinning dense points, but spikes
-tend to form at high simplification.</div></div></div>
+<div class="tip">簡略化された線が、元の線から設定された距離内に残るようにします。
+密なポイントを薄くするのに適していますが、単純化を高くするとスパイクが形成される傾向があります。</div></div></div>
 			</div>			
 
 			<div><label><input type="radio" name="method" value="visvalingam" class="radio">Visvalingam / effective area</label><div class="tip-button">?<div class="tip-anchor">
-<div class="tip">Lines are simplified by iteratively
-removing the point that forms
-the least-area triangle with two
-adjacent points.</div></div></div>
+<div class="tip">隣接する2つの点と最小面積の三角形を形成する点を
+繰り返し削除することで、線が簡略化されます。</div></div></div>
 			</div>
 
 			<div><label><input type="radio" name="method" value="weighted_visvalingam" class="radio">Visvalingam / weighted area</label><div class="tip-button">?<div class="tip-anchor">
-<div class="tip">Points located at the vertex
-of more acute angles are
-preferentially removed, for
-a smoother appearance.</div></div></div></div>
-
+<div class="tip">外観を滑らかにするために、
+より鋭角の頂点にあるポイントが優先的に削除されます。</div></div></div></div>
 
 		</div> <!-- option menu -->
 
 		<div>
 <!-- 			<div class="cancel-btn btn dialog-btn">Cancel</div> -->
-			<div class="submit-btn btn dialog-btn">Apply</div>
+			<div class="submit-btn btn dialog-btn">適用</div>
 		</div>
 	</div> <!-- .info-box -->
 </div> <!-- simplify-options -->
