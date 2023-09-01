@@ -800,7 +800,7 @@ img.close-btn {
 .close2-btn {
 	display: inline-block;
 	background-color: #f1f1f1;
-	background-image: url("images/close2.png");
+	background-image: url("../images/close2.png");
 	background-size: cover;
 	float: right;
 	height:  18px;
