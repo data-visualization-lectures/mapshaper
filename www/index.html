@@ -85,8 +85,8 @@
 
 <div id="mshp-not-supported" class="main-area">
 	<div class="info-box">
-	<h3>Unfortunately, mapshaper can't run in <span class="unsupported-browser">this web browser</span></h3>
-	<div>For best results, try <a href="https://www.google.com/chrome/browser/desktop/">Google Chrome</a> or <a href="http://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a>.</div>
+	<h3>残念ながら、<span class="unsupported-browser">このブラウザ</span>ではMapshaperが動作しません。</h3>
+	<div>ベストな結果を得るために、<a href="https://www.google.com/chrome/browser/desktop/">Google Chrome</a> か <a href="http://www.mozilla.org/en-US/firefox/new/">Mozilla Firefox</a> を使用してください。</div>
 	</div>
 </div>
 
@@ -247,7 +247,7 @@ a smoother appearance.</div></div></div></div>
 
 <div id="splash-screen" class="main-area">
 	<div>
-		<h3 id="splash-screen-blurb">Mapshaper is an editor for map data</h3>
+		<h3 id="splash-screen-blurb">Mapshaperは地図データ用のエディタです</h3>
 	</div>
 	<div id="drop-areas" class="drop-area-wrapper main-area">
 
@@ -256,35 +256,35 @@ a smoother appearance.</div></div></div></div>
 		<div class="file-catalog-spacer spacer"></div>
 
 		<div id="import-drop" class="drop-area">
-			<h4>Drop or paste files here or <span class="inline-btn btn" id="file-selection-btn"><span class="label-text">select</span></span> from a folder</h4>
-			<div class="subtitle">Shapefile, GeoJSON, TopoJSON, KML and CSV files are supported</div>
-			<div class="subtitle">Files can be gzipped or in a zip archive</div>
+			<h4>ここにファイルを「ドラッグ&ドロップ」もしくは「ペースト」するか、ファイル・ダイアログから<span class="inline-btn btn" id="file-selection-btn"><span class="label-text">選択</span></span>します。</h4>
+			<div class="subtitle">Shapefile、GeoJSON、TopoJSON、KML、CSVファイルをサポートしています。</div>
+			<div class="subtitle">ファイルは gzipped や zip などの形式で圧縮されていても大丈夫です。</div>
 		</div>
 		<div class="spacer"></div>
 		<div id="import-quick-drop" class="drop-area">
-			<h4>Quick import</h4>
-			<div class="subtitle">Drop or paste files here to import with default settings</div>
+			<h4>クイック・インポート</h4>
+			<div class="subtitle">ここにファイルを「ドラッグ&ドロップ」もしくは「ペースト」してください。デフォルト設定で読み込みます。</div>
 		</div>
 	</div>
 </div>
 
 <div id="import-options" class="main-area popup-dialog">
 	<div class="info-box">
-		<h3 class="list-header">Files</h3>
+		<h3 class="list-header">ファイル</h3>
 
 		<div class="dropped-file-list"></div>
 		
 		<div class="option-menu">
 
 			<div id="path-import-options">
-				<h4>Options</h4>
+				<h4>オプション</h4>
 
-				<div><label for="repair-intersections-opt"><input type="checkbox" checked class="checkbox" id="repair-intersections-opt"/>detect line intersections</label>
+				<div><label for="repair-intersections-opt"><input type="checkbox" checked class="checkbox" id="repair-intersections-opt"/>線の交点を検出する</label>
 				<div class="tip-button">?<div class="tip-anchor">
 
-<div class="tip">Detect line intersections, including
-self-intersections, to help identify
-topological errors in a dataset.</div></div></div></div>
+<div class="tip">自己交差を含むラインの交差を検出して、
+データセット内のトポロジ・エラー
+の特定に役立てます。</div></div></div></div>
 
 				<!-- <div><label for="snap-points-opt"><input type="checkbox" class="checkbox" id="snap-points-opt" />snap vertices</label>
 				<div class="tip-button">?<div class="tip-anchor">
@@ -299,17 +299,17 @@ apply to TopoJSON files.</div></div></div></div> -->
 		<div><input type="text" class="text-input advanced-options" placeholder="import options" />
 			<a href="https://github.com/mbloch/mapshaper/wiki/Command-Reference#-i-input" target="_mapshaper_import_docs">
 			<div class="tip-button">?<div class="tip-anchor">
-<div class="tip">Enter options from the command line
-interface. Examples: <span id="import-option-examples">snap no-topology
-encoding=big5</span>. Click to see all options.</div></div></div></div>
+<div class="tip">CLIオプションを入力します。
+例: <span id="import-option-examples">snap no-topology encoding=big5</span>
+クリックするとすべてのオプションを確認することができます。</div></div></div></div>
 		</a>
 
 		</div>
 
 		<div id="import-buttons">
-			<div class="cancel-btn btn dialog-btn">Cancel</div>
-			<div class="add-btn btn dialog-btn">Select</div>
-			<div class="submit-btn btn dialog-btn default-btn">Import</div>
+			<div class="cancel-btn btn dialog-btn">キャンセル</div>
+			<div class="add-btn btn dialog-btn">追加でファイル選択</div>
+			<div class="submit-btn btn dialog-btn default-btn">読み込む</div>
 		</div>
 
 	</div> <!-- .info-box -->
