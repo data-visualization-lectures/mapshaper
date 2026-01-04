@@ -1,3 +1,6 @@
+// Imports removed for browser usage
+
+
 // ---- 設定 ----
 const SUPABASE_URL = "https://vebhoeiltxspsurqoxvl.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZlYmhvZWlsdHhzcHN1cnFveHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzAyMjI2MTIsImV4cCI6MjA0NTc5ODYxMn0.sV-Xf6wP_m46D_q-XN0oZfK9NogDqD9xV5sS-n6J8c4"; // 公開OKなAnon Key
@@ -25,96 +28,36 @@ const COOKIE_DOMAIN = (() => {
 
 const cookieStorage = {
   getItem: (key) => {
-    // console.log("[AuthDebug] Lookup key:", key);
     const cookies = document.cookie
       .split(";")
       .map((c) => c.trim())
-      .reduce((acc, current) => {
-        const [k, ...v] = current.split("=");
-        acc[k] = v.join("=");
-        return acc;
-      }, {});
+      .filter(Boolean);
 
-    let rawVal = cookies[key];
-
-    // If exact key not found, try to find chunked cookies (key.0, key.1, ...)
-    if (!rawVal) {
-      const chunks = [];
-      let i = 0;
-      while (cookies[`${key}.${i}`]) {
-        chunks.push(cookies[`${key}.${i}`]);
-        i++;
+    for (const c of cookies) {
+      const [k, ...rest] = c.split("=");
+      if (k === key) {
+        const rawVal = decodeURIComponent(rest.join("="));
+        try { return JSON.parse(rawVal); } catch (e) { }
+        try {
+          let toDecode = rawVal.startsWith('base64-') ? rawVal.slice(7) : rawVal;
+          const base64Standard = toDecode.replace(/-/g, '+').replace(/_/g, '/');
+          return JSON.parse(atob(base64Standard));
+        } catch (e) { return null; }
       }
-      if (chunks.length > 0) {
-        // console.log(`[AuthDebug] Found ${chunks.length} chunks for ${key}`);
-        rawVal = chunks.join("");
-      }
-    }
-
-    if (!rawVal) {
-      // console.log("[AuthDebug] No value found");
-      return null;
-    }
-
-    // Decoding attempts
-    // 1. Try raw JSON
-    try {
-      const res = JSON.parse(rawVal);
-      // console.log("[AuthDebug] Raw JSON parsed success");
-      return res;
-    } catch (e) { }
-
-    // 2. Try URL-decoded JSON
-    const decodedVal = decodeURIComponent(rawVal);
-    try {
-      const res = JSON.parse(decodedVal);
-      // console.log("[AuthDebug] URL-decoded JSON parsed success");
-      return res;
-    } catch (e) { }
-
-    // 3. Try Base64 decoding (Supabase standard)
-    try {
-      let toDecode = decodedVal.trim();
-      // Remove 'base64-' prefix if present
-      if (toDecode.startsWith('base64-')) {
-        toDecode = toDecode.slice(7);
-      }
-      // Fix URL-safe base64 to standard base64
-      const base64Standard = toDecode.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonStr = atob(base64Standard);
-      const res = JSON.parse(jsonStr);
-      // console.log("[AuthDebug] Base64 parsed success");
-      return res;
-    } catch (e) {
-      console.error("[AuthDebug] All parse attempts failed for cookie", e);
     }
     return null;
   },
   setItem: (key, value) => {
     let encoded;
     try { encoded = btoa(value); } catch (e) { return; }
-    let cookieStr = `${key}=${encoded}; Max-Age=${COOKIE_MAX_AGE}; Path=/; SameSite=Lax; Secure`;
+    let cookieStr = `${key}=${encoded}; Max-Age=${COOKIE_MAX_AGE}; Path=/; SameSite=None; Secure`;
     if (COOKIE_DOMAIN) cookieStr += `; Domain=${COOKIE_DOMAIN}`;
     document.cookie = cookieStr;
   },
   removeItem: (key) => {
-    const deleteCookie = (name) => {
-      let cookieStr = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Secure`;
-      if (COOKIE_DOMAIN) cookieStr += `; Domain=${COOKIE_DOMAIN}`;
-      document.cookie = cookieStr;
-    };
-
-    // Delete main cookie
-    deleteCookie(key);
-
-    // Delete chunked cookies (key.0, key.1, ...)
-    // Iterate over all cookies to find chunks
-    const cookies = document.cookie.split(';').map(c => c.trim().split('=')[0]);
-    cookies.forEach(cookieKey => {
-      if (cookieKey.startsWith(`${key}.`)) {
-        deleteCookie(cookieKey);
-      }
-    });
+    let cookieStr = `${key}=; Max-Age=0; Path=/; SameSite=None; Secure`;
+    if (COOKIE_DOMAIN) cookieStr += `; Domain=${COOKIE_DOMAIN}`;
+    document.cookie = cookieStr;
   },
 };
 
@@ -128,31 +71,50 @@ const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SU
     detectSessionInUrl: true,
   },
 }) : null;
+// 外部公開（リファクタリング対応）
+if (supabase) {
+  window.datavizSupabase = supabase;
+  window.datavizApiUrl = API_BASE_URL;
+}
 
 
 // =========================================================================
-// UI Component: 共通ヘッダー (Shadow DOM使用)
+// UI Component: 共通ヘッダー (Web Component Standard)
 // =========================================================================
 class DatavizGlobalHeader {
   constructor() {
-    this.host = document.createElement('div');
-    this.host.id = 'dataviz-global-header-host';
-    this.shadow = this.host.attachShadow({ mode: 'open' });
     this.state = {
       isLoading: true,
       user: null
     };
+    this.shadowRoot = null;
+    this.host = null;
   }
 
   mount() {
-    // 既存のものがあれば削除（二重防止）
-    const existing = document.getElementById('dataviz-global-header-host');
-    if (existing) existing.remove();
-    document.body.prepend(this.host);
+    // 既存のタグを探すか、新規作成して body 先頭に挿入
+    let el = document.querySelector('dataviz-header');
+    if (!el) {
+      el = document.createElement('dataviz-header');
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => document.body.prepend(el));
+      } else {
+        document.body.prepend(el);
+      }
+    }
+    this.host = el;
+
+    // Shadow DOM の確保
+    if (this.host.shadowRoot) {
+      this.shadowRoot = this.host.shadowRoot;
+    } else {
+      this.shadowRoot = this.host.attachShadow({ mode: 'open' });
+    }
+
     this.render();
   }
 
-  update(newState) {
+  updateState(newState) {
     this.state = { ...this.state, ...newState };
     this.render();
   }
@@ -248,10 +210,13 @@ class DatavizGlobalHeader {
   }
 
   render() {
+    if (!this.shadowRoot) return;
+
     const { isLoading, user } = this.state;
 
     // アカウントページのURL
     const accountUrl = `${AUTH_APP_URL}/account`;
+    // const loginUrl = `${AUTH_APP_URL}/auth/sign-up?redirect_to=${encodeURIComponent(window.location.href)}`;
     const loginUrl = `${AUTH_APP_URL}/auth/login?redirect_to=${encodeURIComponent(window.location.href)}`;
 
     let rightContent = '';
@@ -273,7 +238,7 @@ class DatavizGlobalHeader {
       `;
     }
 
-    this.shadow.innerHTML = `
+    this.shadowRoot.innerHTML = `
       <style>${this.getStyles()}</style>
       <div class="dv-header">
         <div class="dv-left">
@@ -286,7 +251,7 @@ class DatavizGlobalHeader {
     `;
 
     // イベントリスナーの再結合 (Shadow DOM再描画後)
-    const logoutBtn = this.shadow.getElementById('dv-logout-btn');
+    const logoutBtn = this.shadowRoot.getElementById('dv-logout-btn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
         if (confirm('ログアウトしますか？')) {
@@ -297,6 +262,7 @@ class DatavizGlobalHeader {
     }
   }
 }
+// customElements.define('dataviz-header', DatavizGlobalHeader);
 
 
 // =========================================================================
@@ -323,8 +289,8 @@ function performRedirect(url, reason) {
 async function verifyUserAccess(session) {
   if (!session) {
     const redirectTo = encodeURIComponent(window.location.href);
-    const loginUrl = `${AUTH_APP_URL}/auth/login?redirect_to=${redirectTo}`;
-    performRedirect(loginUrl, 'Unauthenticated');
+    const signUpUrl = `${AUTH_APP_URL}/auth/login?redirect_to=${redirectTo}`;
+    performRedirect(signUpUrl, 'Unauthenticated');
     return null;
   }
 
@@ -348,7 +314,7 @@ async function verifyUserAccess(session) {
     const isActive = status === "active" || status === "trialing" || isCanceledButValid;
 
     if (!isActive) {
-      performRedirect(`${AUTH_APP_URL}/account`, `Inactive Subscription (${status})`);
+      performRedirect(AUTH_APP_URL, `Inactive Subscription (${status})`);
       return null;
     }
 
@@ -373,21 +339,13 @@ async function initDatavizToolAuth() {
     return;
   }
 
-  // 1. UIの初期化・表示
+  // 1. UIの初期化・表示 (Refatored to Class)
   const headerUI = new DatavizGlobalHeader();
-  // DOMContentLoadedを待つ
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => headerUI.mount());
-  } else {
-    headerUI.mount();
-  }
+  headerUI.mount();
 
   let isCheckDone = false;
 
   const handleSession = async (session) => {
-    // UIをローディング状態に
-    // headerUI.update({ isLoading: true }); // チラつき防止のためここでのローディング表示は慎重に
-
     // URLパラメータ掃除
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const searchParams = new URLSearchParams(window.location.search);
@@ -397,7 +355,7 @@ async function initDatavizToolAuth() {
 
     if (!session) {
       // 未ログイン
-      headerUI.update({ isLoading: false, user: null });
+      headerUI.updateState({ isLoading: false, user: null });
       await verifyUserAccess(null); // リダイレクト実行
       return;
     }
@@ -406,34 +364,21 @@ async function initDatavizToolAuth() {
     const profile = await verifyUserAccess(session);
     if (profile) {
       // 成功 -> UI更新
-      headerUI.update({ isLoading: false, user: profile });
+      headerUI.updateState({ isLoading: false, user: profile });
     }
     // 失敗時は verifyUserAccess 内でリダイレクトされる
   };
 
-  // Authイベント監視
+  // authStateChange のみで判定（初期化タイミング問題を回避）
   supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'INITIAL_SESSION') {
-      if (isCheckDone) return;
-      isCheckDone = true;
+    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
+      if (!isCheckDone) {
+        isCheckDone = true;
+      }
       await handleSession(session);
-    }
-    else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-      await handleSession(session);
-    }
-    else if (event === 'SIGNED_OUT') {
-      await handleSession(null);
     }
   });
-
-  // フォールバックチェック
-  const { data } = await supabase.auth.getSession();
-  if (!isCheckDone) {
-    isCheckDone = true;
-    await handleSession(data.session);
-  }
 }
 
 // 自動実行
 initDatavizToolAuth();
-window.supabase = supabase;

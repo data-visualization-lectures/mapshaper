@@ -62,7 +62,7 @@ const cookieStorage = {
 };
 
 // ---- Supabase クライアント作成 ----
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: cookieStorage,
     storageKey: AUTH_COOKIE_NAME,
@@ -70,25 +70,47 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },
-});
+}) : null;
 // 外部公開（リファクタリング対応）
-window.datavizSupabase = supabase;
+if (supabase) {
+  window.datavizSupabase = supabase;
+  window.datavizApiUrl = API_BASE_URL;
+}
 
 
 // =========================================================================
 // UI Component: 共通ヘッダー (Web Component Standard)
 // =========================================================================
-class DatavizGlobalHeader extends HTMLElement {
+class DatavizGlobalHeader {
   constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
     this.state = {
       isLoading: true,
       user: null
     };
+    this.shadowRoot = null;
+    this.host = null;
   }
 
-  connectedCallback() {
+  mount() {
+    // 既存のタグを探すか、新規作成して body 先頭に挿入
+    let el = document.querySelector('dataviz-header');
+    if (!el) {
+      el = document.createElement('dataviz-header');
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => document.body.prepend(el));
+      } else {
+        document.body.prepend(el);
+      }
+    }
+    this.host = el;
+
+    // Shadow DOM の確保
+    if (this.host.shadowRoot) {
+      this.shadowRoot = this.host.shadowRoot;
+    } else {
+      this.shadowRoot = this.host.attachShadow({ mode: 'open' });
+    }
+
     this.render();
   }
 
@@ -188,11 +210,14 @@ class DatavizGlobalHeader extends HTMLElement {
   }
 
   render() {
+    if (!this.shadowRoot) return;
+
     const { isLoading, user } = this.state;
 
     // アカウントページのURL
     const accountUrl = `${AUTH_APP_URL}/account`;
-    const loginUrl = `${AUTH_APP_URL}/auth/sign-up?redirect_to=${encodeURIComponent(window.location.href)}`;
+    // const loginUrl = `${AUTH_APP_URL}/auth/sign-up?redirect_to=${encodeURIComponent(window.location.href)}`;
+    const loginUrl = `${AUTH_APP_URL}/auth/login?redirect_to=${encodeURIComponent(window.location.href)}`;
 
     let rightContent = '';
 
@@ -237,7 +262,7 @@ class DatavizGlobalHeader extends HTMLElement {
     }
   }
 }
-customElements.define('dataviz-header', DatavizGlobalHeader);
+// customElements.define('dataviz-header', DatavizGlobalHeader);
 
 
 // =========================================================================
@@ -264,7 +289,7 @@ function performRedirect(url, reason) {
 async function verifyUserAccess(session) {
   if (!session) {
     const redirectTo = encodeURIComponent(window.location.href);
-    const signUpUrl = `${AUTH_APP_URL}/auth/sign-up?redirect_to=${redirectTo}`;
+    const signUpUrl = `${AUTH_APP_URL}/auth/login?redirect_to=${redirectTo}`;
     performRedirect(signUpUrl, 'Unauthenticated');
     return null;
   }
@@ -314,16 +339,9 @@ async function initDatavizToolAuth() {
     return;
   }
 
-  // 1. UIの初期化・表示 (Web Component)
-  let headerEl = document.querySelector('dataviz-header');
-  if (!headerEl) {
-    headerEl = document.createElement('dataviz-header');
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => document.body.prepend(headerEl));
-    } else {
-      document.body.prepend(headerEl);
-    }
-  }
+  // 1. UIの初期化・表示 (Refatored to Class)
+  const headerUI = new DatavizGlobalHeader();
+  headerUI.mount();
 
   let isCheckDone = false;
 
@@ -337,7 +355,7 @@ async function initDatavizToolAuth() {
 
     if (!session) {
       // 未ログイン
-      if (headerEl) headerEl.updateState({ isLoading: false, user: null });
+      headerUI.updateState({ isLoading: false, user: null });
       await verifyUserAccess(null); // リダイレクト実行
       return;
     }
@@ -346,7 +364,7 @@ async function initDatavizToolAuth() {
     const profile = await verifyUserAccess(session);
     if (profile) {
       // 成功 -> UI更新
-      if (headerEl) headerEl.updateState({ isLoading: false, user: profile });
+      headerUI.updateState({ isLoading: false, user: profile });
     }
     // 失敗時は verifyUserAccess 内でリダイレクトされる
   };
