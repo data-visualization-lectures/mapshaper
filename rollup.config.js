@@ -14,12 +14,7 @@ const onBundle = {
     const dest = path.join(__dirname, 'www/mapshaper.js');
     fs.writeFileSync(dest, fs.readFileSync(src));
 
-    // Copy auth libs to www/js/
-    const libSrc = path.join(__dirname, 'src/lib');
-    const jsDest = path.join(__dirname, 'www/js');
-
-    fs.copyFileSync(path.join(libSrc, 'supabase.js'), path.join(jsDest, 'supabase.js'));
-    fs.copyFileSync(path.join(libSrc, 'dataviz-auth-client.js'), path.join(jsDest, 'dataviz-auth-client.js'));
+    // Auth libs are loaded via absolute URLs in index.html.
   }
 };
 
