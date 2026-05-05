@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "mapshaper.dataviz.jp" }],
+      "destination": "https://mapshaper.dataprep.jp/:path*",
+      "permanent": true
+    }
+  ]
+}
