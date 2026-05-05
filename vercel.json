@@ -1,10 +1,11 @@
 {
-  "redirects": [
+  "routes": [
     {
-      "source": "/:path*",
+      "src": "/(.*)",
       "has": [{ "type": "host", "value": "mapshaper.dataviz.jp" }],
-      "destination": "https://mapshaper.dataprep.jp/:path*",
-      "permanent": true
-    }
+      "status": 308,
+      "headers": { "Location": "https://mapshaper.dataprep.jp/$1" }
+    },
+    { "handle": "filesystem" }
   ]
 }
